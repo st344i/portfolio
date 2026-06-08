@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Culinary Collective — Monthly Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F0EEE8; color: #1a1a18; padding: 20px; min-height: 100vh; }
+
+  /* Header */
+  .header { background: #fff; border: 1px solid #E0DDD6; border-radius: 14px; padding: 18px 22px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .logo { font-family: 'Instrument Serif', serif; font-size: 20px; }
+  .logo em { font-style: italic; color: #888780; }
+  .sub-label { font-size: 12px; color: #5F5E5A; margin-top: 4px; }
+  .month-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .mon { font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: 8px; border: 1.5px solid #D3D1C7; background: #F7F6F2; color: #5F5E5A; cursor: pointer; transition: all 0.15s; }
+  .mon:hover { border-color: #888780; color: #1a1a18; }
+  .mon.active { background: #1a1a18; color: #fff; border-color: #1a1a18; }
+  .mon.future { opacity: 0.35; cursor: default; pointer-events: none; }
+
+  /* Highlights strip */
+  .highlights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+  .hl-card { border-radius: 12px; padding: 14px 16px; border: 1px solid transparent; }
+  .hl-card.green { background: #EAF3DE; border-color: #B8D98A; }
+  .hl-card.amber { background: #FAEEDA; border-color: #F5C97A; }
+  .hl-card.red   { background: #FCEBEB; border-color: #F0AAAA; }
+  .hl-eyebrow { font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+  .hl-card.green .hl-eyebrow { color: #3B6D11; }
+  .hl-card.amber .hl-eyebrow { color: #854F0B; }
+  .hl-card.red   .hl-eyebrow { color: #A32D2D; }
+  .hl-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; color: #1a1a18; }
+  .hl-sub { font-size: 11px; color: #5F5E5A; }
+
+  /* Flags row */
+  .flags-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .flag-chip { display: flex; align-items: center; gap: 7px; padding: 7px 12px; background: #fff; border: 1px solid #E0DDD6; border-radius: 8px; font-size: 11px; white-space: nowrap; }
+  .fdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .fvenue { color: #888780; margin-left: 2px; }
+
+  /* Section label */
+  .section-lbl { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #888780; margin-bottom: 10px; font-weight: 500; }
+
+  /* KPI grid */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .kpi { background: #fff; border: 1px solid #E0DDD6; border-radius: 12px; padding: 16px 18px; }
+  .kpi-lbl { font-size: 11px; color: #5F5E5A; margin-bottom: 6px; }
+  .kpi-val { font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 500; line-height: 1; margin-bottom: 10px; }
+  .kpi-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin-bottom: 5px; }
+  .kpi-target { color: #888780; }
+  .track { height: 5px; border-radius: 3px; background: #D3D1C7; overflow: hidden; }
+  .t-good { height: 100%; border-radius: 3px; background: #639922; }
+  .t-warn { height: 100%; border-radius: 3px; background: #EF9F27; }
+  .t-bad  { height: 100%; border-radius: 3px; background: #E24B4A; }
+  .s-good { color: #3B6D11; font-weight: 500; }
+  .s-warn { color: #854F0B; font-weight: 500; }
+  .s-bad  { color: #A32D2D; font-weight: 500; }
+
+  /* Layout */
+  .two-col   { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+  .panel { background: #fff; border: 1px solid #E0DDD6; border-radius: 12px; padding: 18px; }
+  .panel-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .panel-sub   { font-size: 11px; color: #888780; margin-bottom: 14px; }
+
+  /* Venue table */
+  .vtable-hd { display: grid; grid-template-columns: 1fr 70px 70px 52px 60px; gap: 8px; font-size: 10px; color: #888780; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #F0EEE8; }
+  .vtable-hd span:not(:first-child) { text-align: right; }
+  .vrow { display: grid; grid-template-columns: 1fr 70px 70px 52px 60px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px solid #F0EEE8; font-size: 12px; }
+  .vrow:last-child { border-bottom: none; }
+  .vname { font-weight: 500; }
+  .vval  { text-align: right; }
+
+  /* Trend */
+  .trend-wrap { display: flex; align-items: flex-end; gap: 6px; height: 80px; margin: 8px 0 6px; }
+  .trend-col  { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+  .trend-bar  { width: 100%; border-radius: 3px 3px 0 0; background: #1a1a18; min-height: 4px; }
+  .trend-lbl  { font-size: 10px; color: #888780; }
+
+  /* Mix */
+  .mix-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid #F0EEE8; font-size: 12px; }
+  .mix-row:last-child { border-bottom: none; }
+  .mix-lbl { display: flex; align-items: center; gap: 8px; color: #5F5E5A; }
+  .mix-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Events */
+  .ev-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F0EEE8; font-size: 12px; }
+  .ev-row:last-child { border-bottom: none; }
+  .ev-name { font-weight: 500; margin-bottom: 2px; }
+  .ev-sub  { font-size: 11px; color: #888780; }
+
+  /* Stats */
+  .stat { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid #F0EEE8; font-size: 12px; }
+  .stat:last-child { border-bottom: none; }
+  .stat-lbl { color: #5F5E5A; }
+
+  .footer { font-size: 11px; color: #888780; text-align: center; padding-top: 14px; border-top: 1px solid #E0DDD6; margin-top: 4px; }
+
+  @media (max-width: 900px) {
+    .highlights { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2,1fr); }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header" style="align-items:stretch;gap:0;">
+
+  <!-- Left: logo + month nav -->
+  <div style="display:flex;flex-direction:column;gap:14px;flex:1;padding-right:24px;">
+    <div>
+      <div class="logo">Culinary Collective <em>/ Monthly Dashboard</em></div>
+      <div class="sub-label" id="sub-label">Jun 2026 · all venues & business units</div>
+    </div>
+    <div class="month-nav" id="month-nav"></div>
+  </div>
+
+  <!-- Divider -->
+  <div style="width:1px;background:#E0DDD6;flex-shrink:0;margin:0 24px;"></div>
+
+  <!-- Right: key -->
+  <div style="flex-shrink:0;min-width:160px;">
+    <div style="font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#888780;margin-bottom:10px;">Key</div>
+    <div style="display:flex;flex-direction:column;gap:5px;">
+      <div style="font-size:11px;color:#1a1a18;"><strong>GP%</strong> &nbsp;Gross Profit %</div>
+      <div style="font-size:11px;color:#1a1a18;"><strong>MoM</strong> &nbsp;Month on Month</div>
+      <div style="font-size:11px;color:#1a1a18;"><strong>WoW</strong> &nbsp;Week on Week</div>
+      <div style="font-size:11px;color:#1a1a18;"><strong>YTD</strong> &nbsp;Year to Date</div>
+      <div style="font-size:11px;color:#1a1a18;"><strong>CoS</strong> &nbsp;Cost of Sales</div>
+      <div style="font-size:11px;color:#1a1a18;"><strong>RAG</strong> &nbsp;Red / Amber / Green</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- HIGHLIGHTS -->
+<div class="highlights" id="highlights"></div>
+
+<!-- FLAGS ROW -->
+<div class="flags-row" id="flags-row"></div>
+
+<!-- KPIs -->
+
+<div class="section-lbl" id="kpi-section">Group KPIs — Jun 2026</div>
+<div class="kpi-grid" id="kpi-grid"></div>
+
+<!-- Venue + Trend -->
+<div class="two-col">
+  <div class="panel">
+    <div class="panel-title">Revenue by venue</div>
+    <div class="panel-sub" id="venue-sub">All 6 venues · vs prior month</div>
+    <div class="vtable-hd">
+      <span>Venue</span>
+      <span style="text-align:right">This mo.</span>
+      <span style="text-align:right">Prior mo.</span>
+      <span style="text-align:right">GP %</span>
+      <span style="text-align:right">MoM</span>
+    </div>
+    <div id="vrows"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Revenue trend</div>
+    <div class="panel-sub">Group total · Jan – current month</div>
+    <div class="trend-wrap" id="trend"></div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid #F0EEE8;">
+      <div class="stat"><span class="stat-lbl">Best month so far</span><span style="font-weight:500;" id="best-month">Jun 2026</span></div>
+      <div class="stat"><span class="stat-lbl">YTD revenue</span><span style="font-weight:500;" id="ytd">£4.31m</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Mix + Events -->
+<div class="two-col">
+  <div class="panel">
+    <div class="panel-title">Sales mix</div>
+    <div class="panel-sub">Group · this month</div>
+    <div id="mix-rows"></div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #F0EEE8;">
+      <div class="stat"><span class="stat-lbl">Total covers</span><span style="font-weight:500;" id="total-covers">14,280</span></div>
+      <div class="stat"><span class="stat-lbl">Avg spend per cover</span><span style="font-weight:500;" id="avg-spend">£29.10</span></div>
+      <div class="stat"><span class="stat-lbl">No-show rate</span><span style="font-weight:500;" id="noshow">6.1%</span></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title">Event & catering performance</div>
+    <div class="panel-sub" id="event-sub">Live events & white-label · this month</div>
+    <div id="evrows"></div>
+  </div>
+</div>
+
+
+<div class="footer">Mock data for portfolio purposes · Built with Claude · Steffi Tennyson 2026</div>
+
+<script>
+const MONTHS  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CURRENT = 5;
+const TREND   = [620,580,710,760,800,842,0,0,0,0,0,0];
+
+const DATA = {
+  0: {
+    highlights:[
+      {type:'amber', eye:'Watch', title:'Post-Christmas dip', sub:'Revenue down vs Dec — typical Jan pattern'},
+      {type:'red',   eye:'Action needed', title:'GP below target', sub:'4 venues tracking under 66% GP target'},
+      {type:'amber', eye:'Monitor', title:'Labour above target', sub:'Group labour at 31% vs 28% target'},
+    ],
+    flags:[
+      {col:'#E24B4A', txt:'January dip — lowest month of year', venue:'Group'},
+      {col:'#EF9F27', txt:'GP below 66% across 4 venues', venue:'Group'},
+      {col:'#EF9F27', txt:'Labour above target — review rotas', venue:'Group'},
+    ],
+    kpis:[
+      {lbl:'Total revenue', val:'£620k', target:null, status:'-4% vs Dec', sc:'s-warn', pct:75, tc:'t-warn'},
+      {lbl:'Gross profit %',val:'64%', target:'Target: 66%', status:'2% below ⚠', sc:'s-warn', pct:65, tc:'t-warn'},
+      {lbl:'Total covers',  val:'10,840', target:'Target: 11,000', status:'Just below target', sc:'s-warn', pct:80, tc:'t-warn'},
+      {lbl:'Labour cost %', val:'31%', target:'Target: 28%', status:'3% over ⚠', sc:'s-warn', pct:55, tc:'t-warn'},
+    ],
+    venues:[
+      {n:'Flat Iron Sq.',  tw:162,lw:178,gp:'69%',mom:'-9%', mc:'s-bad'},
+      {n:'Pyro',           tw:128,lw:142,gp:'66%',mom:'-10%',mc:'s-bad'},
+      {n:'Heard',          tw:110,lw:122,gp:'64%',mom:'-10%',mc:'s-bad'},
+      {n:'Oudh 1722',      tw:92, lw:104,gp:'62%',mom:'-12%',mc:'s-bad'},
+      {n:"Rae's",          tw:72, lw:84, gp:'68%',mom:'-14%',mc:'s-bad'},
+      {n:'Spring St Pizza',tw:60, lw:72, gp:'61%',mom:'-17%',mc:'s-bad'},
+    ],
+    mix:[{l:'Food',p:53,c:'#2C2C2A'},{l:'Beverage',p:22,c:'#888780'},{l:'Events & hire',p:12,c:'#B4B2A9'},{l:'Catering',p:9,c:'#D3D1C7'},{l:'Other',p:4,c:'#E8E6E0'}],
+    events:[{n:'Flat Iron Square',s:'2 events',v:'£42k',d:'↓ 18% vs Dec',dc:'#A32D2D'},{n:'White-label catering',s:'4 bookings',v:'£28k',d:'→ flat',dc:'#888780'},{n:"Rae's private hire",s:'1 event',v:'£8k',d:'↓ 20%',dc:'#A32D2D'}],
+    covers:'10,840', avgSpend:'£27.20', noshow:'7.2%', bestMonth:'Jun 2026', ytd:'£620k',
+  },
+  1: {
+    highlights:[
+      {type:'red',   eye:'Action needed', title:'Lowest revenue month', sub:'£580k — 6% below January'},
+      {type:'red',   eye:'Action needed', title:'GP hit 63%', sub:'Urgent review needed across all venues'},
+      {type:'red',   eye:'Action needed', title:'Labour at 32%', sub:'4% above target — rota review required'},
+    ],
+    flags:[
+      {col:'#E24B4A', txt:'Lowest revenue month of the year', venue:'Group'},
+      {col:'#E24B4A', txt:'GP at 63% — urgent review', venue:'Group'},
+      {col:'#E24B4A', txt:'Labour at 32% — 4% above target', venue:'Group'},
+    ],
+    kpis:[
+      {lbl:'Total revenue', val:'£580k', target:null, status:'-6% vs Jan', sc:'s-bad', pct:65, tc:'t-bad'},
+      {lbl:'Gross profit %',val:'63%', target:'Target: 66%', status:'3% below ✗', sc:'s-bad', pct:50, tc:'t-bad'},
+      {lbl:'Total covers',  val:'10,200', target:'Target: 11,000', status:'Below target', sc:'s-bad', pct:60, tc:'t-bad'},
+      {lbl:'Labour cost %', val:'32%', target:'Target: 28%', status:'4% over ✗', sc:'s-bad', pct:40, tc:'t-bad'},
+    ],
+    venues:[
+      {n:'Flat Iron Sq.',  tw:148,lw:162,gp:'68%',mom:'-9%',mc:'s-bad'},
+      {n:'Pyro',           tw:118,lw:128,gp:'65%',mom:'-8%',mc:'s-bad'},
+      {n:'Heard',          tw:102,lw:110,gp:'63%',mom:'-7%',mc:'s-bad'},
+      {n:'Oudh 1722',      tw:88, lw:92, gp:'61%',mom:'-4%',mc:'s-bad'},
+      {n:"Rae's",          tw:68, lw:72, gp:'67%',mom:'-6%',mc:'s-bad'},
+      {n:'Spring St Pizza',tw:56, lw:60, gp:'60%',mom:'-7%',mc:'s-bad'},
+    ],
+    mix:[{l:'Food',p:54,c:'#2C2C2A'},{l:'Beverage',p:21,c:'#888780'},{l:'Events & hire',p:11,c:'#B4B2A9'},{l:'Catering',p:10,c:'#D3D1C7'},{l:'Other',p:4,c:'#E8E6E0'}],
+    events:[{n:'Flat Iron Square',s:"Valentine's · 2 events",v:'£38k',d:'↓ 10% vs Jan',dc:'#A32D2D'},{n:'White-label catering',s:'3 bookings',v:'£22k',d:'↓ 21%',dc:'#A32D2D'},{n:"Rae's private hire",s:'1 event',v:'£7k',d:'→ flat',dc:'#888780'}],
+    covers:'10,200', avgSpend:'£26.80', noshow:'7.5%', bestMonth:'Jun 2026', ytd:'£1.2m',
+  },
+  2: {
+    highlights:[
+      {type:'green', eye:'Highlight', title:'Strong spring recovery', sub:'Revenue up 22% on February — bounce back on track'},
+      {type:'amber', eye:'Watch', title:'GP still 1% below target', sub:'Improving but not yet at 66% target'},
+      {type:'amber', eye:'Monitor', title:'Labour improving', sub:'Down to 30% — target is 28%'},
+    ],
+    flags:[
+      {col:'#639922', txt:'Strong spring recovery — up 22% on Feb', venue:'Group'},
+      {col:'#EF9F27', txt:'GP still 1% below target', venue:'Group'},
+      {col:'#EF9F27', txt:'Labour improving but above target', venue:'Group'},
+    ],
+    kpis:[
+      {lbl:'Total revenue', val:'£710k', target:null, status:'+22% vs Feb', sc:'s-good', pct:85, tc:'t-good'},
+      {lbl:'Gross profit %',val:'65%', target:'Target: 66%', status:'1% below ⚠', sc:'s-warn', pct:75, tc:'t-warn'},
+      {lbl:'Total covers',  val:'12,400', target:'Target: 12,000', status:'Above target ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Labour cost %', val:'30%', target:'Target: 28%', status:'2% over ⚠', sc:'s-warn', pct:60, tc:'t-warn'},
+    ],
+    venues:[
+      {n:'Flat Iron Sq.',  tw:178,lw:148,gp:'70%',mom:'+20%',mc:'s-good'},
+      {n:'Pyro',           tw:142,lw:118,gp:'67%',mom:'+20%',mc:'s-good'},
+      {n:'Heard',          tw:122,lw:102,gp:'65%',mom:'+20%',mc:'s-good'},
+      {n:'Oudh 1722',      tw:104,lw:88, gp:'63%',mom:'+18%',mc:'s-good'},
+      {n:"Rae's",          tw:84, lw:68, gp:'69%',mom:'+24%',mc:'s-good'},
+      {n:'Spring St Pizza',tw:72, lw:56, gp:'62%',mom:'+29%',mc:'s-good'},
+    ],
+    mix:[{l:'Food',p:52,c:'#2C2C2A'},{l:'Beverage',p:23,c:'#888780'},{l:'Events & hire',p:13,c:'#B4B2A9'},{l:'Catering',p:8,c:'#D3D1C7'},{l:'Other',p:4,c:'#E8E6E0'}],
+    events:[{n:'Flat Iron Square',s:'Spring launch · 3 events',v:'£68k',d:'↑ 62% vs Feb',dc:'#3B6D11'},{n:'White-label catering',s:'5 bookings',v:'£38k',d:'↑ 73%',dc:'#3B6D11'},{n:"Rae's private hire",s:'2 events',v:'£14k',d:'↑ 100%',dc:'#3B6D11'}],
+    covers:'12,400', avgSpend:'£28.00', noshow:'6.4%', bestMonth:'Jun 2026', ytd:'£1.91m',
+  },
+  3: {
+    highlights:[
+      {type:'green', eye:'Highlight', title:'GP on target for first time', sub:'66% GP achieved — a turning point for the group'},
+      {type:'green', eye:'Highlight', title:'Covers above target', sub:'13,200 vs 13,000 target — demand growing'},
+      {type:'amber', eye:'Watch', title:'Labour still 1% above target', sub:'29% vs 28% target — nearly there'},
+    ],
+    flags:[
+      {col:'#639922', txt:'GP on target for first time this year', venue:'Group'},
+      {col:'#639922', txt:'Covers trending upward 3rd month running', venue:'Group'},
+      {col:'#EF9F27', txt:'Labour 1% above target', venue:'Oudh 1722'},
+    ],
+    kpis:[
+      {lbl:'Total revenue', val:'£760k', target:null, status:'+7% vs Mar', sc:'s-good', pct:90, tc:'t-good'},
+      {lbl:'Gross profit %',val:'66%', target:'Target: 66%', status:'On target ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Total covers',  val:'13,200', target:'Target: 13,000', status:'Above target ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Labour cost %', val:'29%', target:'Target: 28%', status:'1% over ⚠', sc:'s-warn', pct:70, tc:'t-warn'},
+    ],
+    venues:[
+      {n:'Flat Iron Sq.',  tw:195,lw:178,gp:'71%',mom:'+10%',mc:'s-good'},
+      {n:'Pyro',           tw:156,lw:142,gp:'68%',mom:'+10%',mc:'s-good'},
+      {n:'Heard',          tw:134,lw:122,gp:'66%',mom:'+10%',mc:'s-good'},
+      {n:'Oudh 1722',      tw:112,lw:104,gp:'63%',mom:'+8%', mc:'s-good'},
+      {n:"Rae's",          tw:88, lw:84, gp:'70%',mom:'+5%', mc:'s-good'},
+      {n:'Spring St Pizza',tw:76, lw:72, gp:'62%',mom:'+6%', mc:'s-good'},
+    ],
+    mix:[{l:'Food',p:51,c:'#2C2C2A'},{l:'Beverage',p:24,c:'#888780'},{l:'Events & hire',p:14,c:'#B4B2A9'},{l:'Catering',p:7,c:'#D3D1C7'},{l:'Other',p:4,c:'#E8E6E0'}],
+    events:[{n:'Flat Iron Square',s:'3 events',v:'£74k',d:'↑ 9% vs Mar',dc:'#3B6D11'},{n:'White-label catering',s:'6 bookings',v:'£44k',d:'↑ 16%',dc:'#3B6D11'},{n:"Rae's private hire",s:'2 events',v:'£16k',d:'↑ 14%',dc:'#3B6D11'}],
+    covers:'13,200', avgSpend:'£28.60', noshow:'6.3%', bestMonth:'Jun 2026', ytd:'£2.67m',
+  },
+  4: {
+    highlights:[
+      {type:'green', eye:'Highlight', title:'Labour on target ✓', sub:'28% achieved for the first time — group milestone'},
+      {type:'green', eye:'Highlight', title:'GP above target', sub:'67% vs 66% target — positive trend continuing'},
+      {type:'amber', eye:'Watch', title:'Spring St Pizza dipped', sub:'Revenue down 3% month on month — needs attention'},
+    ],
+    flags:[
+      {col:'#639922', txt:'Labour on target for first time this year', venue:'Group'},
+      {col:'#639922', txt:'GP above target — trend improving', venue:'Group'},
+      {col:'#EF9F27', txt:'Revenue dipped slightly MoM', venue:'Spring St Pizza'},
+    ],
+    kpis:[
+      {lbl:'Total revenue', val:'£800k', target:null, status:'+5% vs Apr', sc:'s-good', pct:95, tc:'t-good'},
+      {lbl:'Gross profit %',val:'67%', target:'Target: 66%', status:'1% above ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Total covers',  val:'13,800', target:'Target: 13,500', status:'Above target ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Labour cost %', val:'28%', target:'Target: 28%', status:'On target ✓', sc:'s-good', pct:100, tc:'t-good'},
+    ],
+    venues:[
+      {n:'Flat Iron Sq.',  tw:202,lw:195,gp:'71%',mom:'+4%', mc:'s-good'},
+      {n:'Pyro',           tw:162,lw:156,gp:'69%',mom:'+4%', mc:'s-good'},
+      {n:'Heard',          tw:140,lw:134,gp:'67%',mom:'+4%', mc:'s-good'},
+      {n:'Oudh 1722',      tw:118,lw:112,gp:'64%',mom:'+5%', mc:'s-good'},
+      {n:"Rae's",          tw:92, lw:88, gp:'70%',mom:'+5%', mc:'s-good'},
+      {n:'Spring St Pizza',tw:74, lw:76, gp:'62%',mom:'-3%', mc:'s-bad'},
+    ],
+    mix:[{l:'Food',p:51,c:'#2C2C2A'},{l:'Beverage',p:24,c:'#888780'},{l:'Events & hire',p:15,c:'#B4B2A9'},{l:'Catering',p:7,c:'#D3D1C7'},{l:'Other',p:3,c:'#E8E6E0'}],
+    events:[{n:'Flat Iron Square',s:'4 events',v:'£82k',d:'↑ 11% vs Apr',dc:'#3B6D11'},{n:'White-label catering',s:'6 bookings',v:'£54k',d:'↑ 23%',dc:'#3B6D11'},{n:"Rae's private hire",s:'2 events',v:'£18k',d:'↑ 13%',dc:'#3B6D11'}],
+    covers:'13,800', avgSpend:'£28.90', noshow:'5.9%', bestMonth:'Jun 2026', ytd:'£3.47m',
+  },
+  5: {
+    highlights:[
+      {type:'green', eye:'Highlight', title:'Best month of the year', sub:'£842k — record revenue, all venues up MoM'},
+      {type:'green', eye:'Highlight', title:'GP at 68% — best yet', sub:'2% above target across the group'},
+      {type:'red',   eye:'Action needed', title:'Oudh 1722 labour at 34%', sub:'6% above target — rota review required urgently'},
+    ],
+    flags:[
+      {col:'#639922', txt:'Best revenue month of the year so far', venue:'Group'},
+      {col:'#E24B4A', txt:'Labour at 34% — review rota urgently', venue:'Oudh 1722'},
+      {col:'#EF9F27', txt:'GP slipping — check supplier invoices', venue:'Spring St Pizza'},
+      {col:'#639922', txt:'Record covers week', venue:'Pyro'},
+    ],
+    kpis:[
+      {lbl:'Total revenue', val:'£842k', target:null, status:'+5% vs May', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Gross profit %',val:'68%', target:'Target: 66%', status:'2% above ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Total covers',  val:'14,280', target:'Target: 13,000', status:'Above target ✓', sc:'s-good', pct:100, tc:'t-good'},
+      {lbl:'Labour cost %', val:'29%', target:'Target: 28%', status:'1% over ⚠', sc:'s-warn', pct:70, tc:'t-warn'},
+    ],
+    venues:[
+      {n:'Flat Iron Sq.',  tw:218,lw:202,gp:'71%',mom:'+8%',mc:'s-good'},
+      {n:'Pyro',           tw:174,lw:162,gp:'69%',mom:'+7%',mc:'s-good'},
+      {n:'Heard',          tw:148,lw:140,gp:'67%',mom:'+6%',mc:'s-good'},
+      {n:'Oudh 1722',      tw:124,lw:118,gp:'64%',mom:'+5%',mc:'s-good'},
+      {n:"Rae's",          tw:98, lw:92, gp:'70%',mom:'+7%',mc:'s-good'},
+      {n:'Spring St Pizza',tw:80, lw:74, gp:'63%',mom:'+8%',mc:'s-good'},
+    ],
+    mix:[{l:'Food',p:52,c:'#2C2C2A'},{l:'Beverage',p:24,c:'#888780'},{l:'Events & hire',p:14,c:'#B4B2A9'},{l:'Catering',p:7,c:'#D3D1C7'},{l:'Other',p:3,c:'#E8E6E0'}],
+    events:[{n:'Flat Iron Square',s:'Summer series · 3 events',v:'£94k',d:'↑ 15% vs May',dc:'#3B6D11'},{n:'White-label catering',s:'6 bookings',v:'£61k',d:'↑ 13%',dc:'#3B6D11'},{n:"Rae's private hire",s:'2 events',v:'£22k',d:'↑ 22%',dc:'#3B6D11'}],
+    covers:'14,280', avgSpend:'£29.10', noshow:'6.1%', bestMonth:'Jun 2026', ytd:'£4.31m',
+  }
+};
+
+let active = CURRENT;
+
+function buildNav() {
+  document.getElementById('month-nav').innerHTML = MONTHS.map((m,i) => {
+    const cls = i > CURRENT ? 'mon future' : (i===CURRENT ? 'mon active' : 'mon');
+    return `<button class="${cls}" onclick="setMonth(this,${i})">${m}</button>`;
+  }).join('');
+}
+
+function setMonth(el, idx) {
+  if (idx > CURRENT) return;
+  document.querySelectorAll('.mon').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  active = idx;
+  render(DATA[idx], idx);
+}
+
+function render(d, idx) {
+  document.getElementById('sub-label').textContent    = `${MONTHS[idx]} 2026 · all venues & business units`;
+  document.getElementById('kpi-section').textContent  = `Group KPIs — ${MONTHS[idx]} 2026`;
+  document.getElementById('total-covers').textContent = d.covers;
+  document.getElementById('avg-spend').textContent    = d.avgSpend;
+  document.getElementById('noshow').textContent       = d.noshow;
+  document.getElementById('best-month').textContent   = d.bestMonth;
+  document.getElementById('ytd').textContent          = d.ytd;
+  document.getElementById('venue-sub').textContent    = `All 6 venues · ${MONTHS[idx]} vs ${idx>0?MONTHS[idx-1]:'prior month'}`;
+  document.getElementById('event-sub').textContent    = `Live events & white-label · ${MONTHS[idx]} 2026`;
+
+  // Highlights
+  document.getElementById('highlights').innerHTML = d.highlights.map(h => `
+    <div class="hl-card ${h.type}">
+      <div class="hl-eyebrow">${h.eye}</div>
+      <div class="hl-title">${h.title}</div>
+      <div class="hl-sub">${h.sub}</div>
+    </div>`).join('');
+
+  // Flags row
+  document.getElementById('flags-row').innerHTML = d.flags.map(f => `
+    <div class="flag-chip">
+      <div class="fdot" style="background:${f.col}"></div>
+      <span>${f.txt}</span>
+      <span class="fvenue">· ${f.venue}</span>
+    </div>`).join('');
+
+  // KPIs
+  document.getElementById('kpi-grid').innerHTML = d.kpis.map(k => `
+    <div class="kpi">
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-val">${k.val}</div>
+      <div class="kpi-row">
+        <span class="kpi-target">${k.target||''}</span>
+        <span class="${k.sc}">${k.status}</span>
+      </div>
+      <div class="track"><div class="${k.tc}" style="width:${k.pct}%"></div></div>
+    </div>`).join('');
+
+  // Venues
+  document.getElementById('vrows').innerHTML = d.venues.map(v => `
+    <div class="vrow">
+      <div class="vname">${v.n}</div>
+      <div class="vval">£${v.tw}k</div>
+      <div class="vval" style="color:#888780;">£${v.lw}k</div>
+      <div class="vval">${v.gp}</div>
+      <div class="vval ${v.mc}">${v.mom}</div>
+    </div>`).join('');
+
+  // Trend
+  const maxT = Math.max(...TREND.slice(0,idx+1));
+  document.getElementById('trend').innerHTML = MONTHS.slice(0,idx+1).map((m,i) => {
+    const h = TREND[i]>0 ? Math.round((TREND[i]/maxT)*80) : 4;
+    const op = i===idx ? '1' : '0.28';
+    return `<div class="trend-col">
+      <div class="trend-bar" style="height:${h}px;opacity:${op};"></div>
+      <div class="trend-lbl">${m}</div>
+    </div>`;
+  }).join('');
+
+  // Mix
+  document.getElementById('mix-rows').innerHTML = d.mix.map(m => `
+    <div class="mix-row">
+      <div class="mix-lbl"><span class="mix-dot" style="background:${m.c}"></span>${m.l}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:72px;height:4px;background:#D3D1C7;border-radius:2px;overflow:hidden;">
+          <div style="height:100%;width:${Math.round(m.p*1.9)}%;background:${m.c};border-radius:2px;"></div>
+        </div>
+        <span style="font-weight:500;font-size:12px;">${m.p}%</span>
+      </div>
+    </div>`).join('');
+
+  // Events
+  document.getElementById('evrows').innerHTML = d.events.map(e => `
+    <div class="ev-row">
+      <div><div class="ev-name">${e.n}</div><div class="ev-sub">${e.s}</div></div>
+      <div style="text-align:right;"><div style="font-weight:500;">${e.v}</div><div style="font-size:11px;color:${e.dc};">${e.d}</div></div>
+    </div>`).join('');
+}
+
+buildNav();
+render(DATA[CURRENT], CURRENT);
+</script>
+
+
+
+</body>
+</html>
+<script>
+// Inject glossary after footer
+document.addEventListener('DOMContentLoaded', function() {
+  // Already rendered — append via JS after body loads
+});
+</script>
