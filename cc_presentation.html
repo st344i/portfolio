@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Culinary Collective — Board Review (Light)</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F0EEE8; color: #1a1a18; margin: 0; }
+
+  .slides { width: 100%; }
+  .slide { display: none; width: 100%; min-height: 100vh; padding: 60px 72px; flex-direction: column; justify-content: space-between; background: #F0EEE8; }
+  .slide.active { display: flex; }
+
+  /* Nav */
+  .nav { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; z-index: 100; background: rgba(255,255,255,0.9); padding: 10px 20px; border-radius: 40px; border: 1px solid #E0DDD6; backdrop-filter: blur(8px); }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; background: #D3D1C7; cursor: pointer; transition: all 0.2s; }
+  .nav-dot.active { background: #1a1a18; }
+  .nav-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; color: #888780; background: none; border: none; cursor: pointer; padding: 4px 8px; transition: color 0.15s; }
+  .nav-btn:hover { color: #1a1a18; }
+
+  /* Slide header */
+  .slide-eyebrow { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #888780; margin-bottom: 10px; }
+  .slide-title { font-family: 'Instrument Serif', serif; font-size: 48px; line-height: 1.1; color: #1a1a18; margin-bottom: 6px; }
+  .slide-title em { font-style: italic; color: #888780; }
+  .slide-sub { font-size: 14px; color: #888780; }
+  .slide-header { margin-bottom: 40px; }
+
+  .divider { height: 1px; background: #E0DDD6; margin: 28px 0; }
+
+  /* KPI row */
+  .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 40px; }
+  .kpi-block { background: #fff; border: 1px solid #E0DDD6; border-radius: 12px; padding: 22px 20px; }
+  .kpi-lbl { font-size: 11px; color: #888780; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px; }
+  .kpi-val { font-family: 'Instrument Serif', serif; font-size: 38px; line-height: 1; margin-bottom: 8px; color: #1a1a18; }
+  .kpi-status { font-size: 12px; }
+  .good { color: #3B6D11; }
+  .warn { color: #854F0B; }
+  .bad  { color: #A32D2D; }
+  .track { height: 4px; background: #E0DDD6; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .t-good { height: 100%; background: #639922; border-radius: 2px; }
+  .t-warn { height: 100%; background: #EF9F27; border-radius: 2px; }
+  .t-bad  { height: 100%; background: #E24B4A; border-radius: 2px; }
+
+  /* Venue list */
+  .venue-list { display: flex; flex-direction: column; gap: 12px; }
+  .venue-item { display: grid; grid-template-columns: 160px 1fr 80px 80px 70px; align-items: center; gap: 16px; font-size: 13px; }
+  .venue-name { color: #1a1a18; font-weight: 500; }
+  .vbar-bg { height: 7px; background: #F0EEE8; border-radius: 4px; overflow: hidden; }
+  .vbar-fill { height: 100%; border-radius: 4px; background: #1a1a18; opacity: 0.45; }
+  .vbar-fill.top { opacity: 0.9; }
+  .vrev { text-align: right; font-weight: 500; color: #1a1a18; }
+  .vgp  { text-align: right; color: #888780; font-size: 12px; }
+  .vmom { text-align: right; font-size: 12px; font-weight: 500; }
+
+  .two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .three-col { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+
+  /* Flag cards */
+  .flag-card { background: #fff; border: 1px solid #E0DDD6; border-radius: 12px; padding: 18px; border-left: 3px solid transparent; }
+  .flag-card.red    { border-left-color: #E24B4A; background: #FDF5F5; }
+  .flag-card.amber  { border-left-color: #EF9F27; background: #FDFAF5; }
+  .flag-card.green  { border-left-color: #639922; background: #F5FAF0; }
+  .flag-venue { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+  .flag-card.red   .flag-venue { color: #A32D2D; }
+  .flag-card.amber .flag-venue { color: #854F0B; }
+  .flag-card.green .flag-venue { color: #3B6D11; }
+  .flag-title { font-size: 13px; font-weight: 500; color: #1a1a18; margin-bottom: 4px; }
+  .flag-sub   { font-size: 11px; color: #5F5E5A; line-height: 1.5; }
+
+  /* Action cards */
+  .action-card { background: #fff; border: 1px solid #E0DDD6; border-radius: 12px; padding: 22px; }
+  .action-num { font-family: 'Instrument Serif', serif; font-size: 32px; color: #E0DDD6; line-height: 1; margin-bottom: 8px; }
+  .action-title { font-size: 14px; font-weight: 500; color: #1a1a18; margin-bottom: 6px; }
+  .action-sub   { font-size: 12px; color: #5F5E5A; line-height: 1.5; margin-bottom: 14px; }
+  .action-meta  { display: flex; gap: 8px; flex-wrap: wrap; }
+  .action-tag   { font-size: 10px; padding: 3px 8px; border-radius: 20px; border: 1px solid #E0DDD6; color: #888780; }
+
+  .slide-footer { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #B4B2A9; padding-top: 20px; border-top: 1px solid #E0DDD6; }
+</style>
+</head>
+<body>
+
+<div class="slides">
+
+
+  <!-- SLIDE 0 — COVER -->
+  <div class="slide active" id="slide-0">
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;min-height:100vh;padding:60px 72px;">
+
+      <!-- Top bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#888780;">Culinary Collective</div>
+        <div style="font-size:11px;color:#B4B2A9;">Confidential</div>
+      </div>
+
+      <!-- Centre content -->
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 0 40px;">
+        <div style="width:48px;height:2px;background:#1a1a18;margin-bottom:40px;"></div>
+        <div style="font-family:'Instrument Serif',serif;font-size:72px;line-height:1.0;color:#1a1a18;margin-bottom:16px;">Group Operating<br><em style="color:#888780;">Review</em></div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:18px;color:#888780;margin-bottom:48px;">June 2026</div>
+      </div>
+
+      <!-- Bottom: venues + author -->
+      <div style="border-top:1px solid #E0DDD6;padding-top:20px;display:flex;justify-content:space-between;align-items:flex-end;">
+        <div>
+          <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#B4B2A9;margin-bottom:10px;">Venues covered</div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;">
+            <span style="font-size:12px;color:#888780;">Pyro</span>
+            <span style="font-size:12px;color:#888780;">Heard</span>
+            <span style="font-size:12px;color:#888780;">Oudh 1722</span>
+            <span style="font-size:12px;color:#888780;">Spring Street Pizza</span>
+            <span style="font-size:12px;color:#888780;">Flat Iron Square</span>
+            <span style="font-size:12px;color:#888780;">Rae&#x2019;s</span>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#B4B2A9;margin-bottom:3px;">Author</div>
+          <div style="font-size:12px;color:#888780;">Steffi Tennyson</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SLIDE 1 -->
+  <div class="slide" id="slide-1">
+    <div>
+      <div class="slide-header">
+        <div class="slide-eyebrow">Board Operating Review · June 2026</div>
+        <div class="slide-title">Group Performance <em>Summary</em></div>
+        <div class="slide-sub">Culinary Collective · All venues & business units</div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi-block">
+          <div class="kpi-lbl">Total revenue</div>
+          <div class="kpi-val">£842k</div>
+          <div class="kpi-status good">+5% vs May — best month YTD</div>
+          <div class="track"><div class="t-good" style="width:100%"></div></div>
+        </div>
+        <div class="kpi-block">
+          <div class="kpi-lbl">Gross profit %</div>
+          <div class="kpi-val">68%</div>
+          <div class="kpi-status good">2% above 66% target ✓</div>
+          <div class="track"><div class="t-good" style="width:100%"></div></div>
+        </div>
+        <div class="kpi-block">
+          <div class="kpi-lbl">Total covers</div>
+          <div class="kpi-val">14,280</div>
+          <div class="kpi-status good">Above 13,000 target ✓</div>
+          <div class="track"><div class="t-good" style="width:100%"></div></div>
+        </div>
+        <div class="kpi-block">
+          <div class="kpi-lbl">Labour cost %</div>
+          <div class="kpi-val">29%</div>
+          <div class="kpi-status warn">1% above 28% target ⚠</div>
+          <div class="track"><div class="t-warn" style="width:70%"></div></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div style="background:#fff;border:1px solid #E0DDD6;border-radius:12px;padding:20px;">
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888780;margin-bottom:14px;">Year to date</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;padding-bottom:8px;border-bottom:1px solid #F0EEE8;"><span style="color:#888780;">YTD Revenue</span><span style="font-weight:500;">£4.31m</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;padding-bottom:8px;border-bottom:1px solid #F0EEE8;"><span style="color:#888780;">Best month</span><span style="font-weight:500;">Jun 2026 — £842k</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;padding-bottom:8px;border-bottom:1px solid #F0EEE8;"><span style="color:#888780;">Event revenue</span><span style="font-weight:500;">£177k this month</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:#888780;">Avg spend per cover</span><span style="font-weight:500;">£29.10</span></div>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #E0DDD6;border-radius:12px;padding:20px;">
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888780;margin-bottom:14px;">Revenue trend Jan – Jun</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:110px;">
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:9px;color:#B4B2A9;margin-bottom:3px;">£620k</div><div style="width:100%;height:59px;background:#1a1a18;opacity:0.2;border-radius:3px 3px 0 0;"></div><div style="font-size:10px;color:#888780;">Jan</div></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:9px;color:#B4B2A9;margin-bottom:3px;">£580k</div><div style="width:100%;height:55px;background:#1a1a18;opacity:0.2;border-radius:3px 3px 0 0;"></div><div style="font-size:10px;color:#888780;">Feb</div></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:9px;color:#B4B2A9;margin-bottom:3px;">£710k</div><div style="width:100%;height:67px;background:#1a1a18;opacity:0.2;border-radius:3px 3px 0 0;"></div><div style="font-size:10px;color:#888780;">Mar</div></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:9px;color:#B4B2A9;margin-bottom:3px;">£760k</div><div style="width:100%;height:72px;background:#1a1a18;opacity:0.2;border-radius:3px 3px 0 0;"></div><div style="font-size:10px;color:#888780;">Apr</div></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:9px;color:#B4B2A9;margin-bottom:3px;">£800k</div><div style="width:100%;height:76px;background:#1a1a18;opacity:0.2;border-radius:3px 3px 0 0;"></div><div style="font-size:10px;color:#888780;">May</div></div>
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;"><div style="font-size:9px;color:#1a1a18;font-weight:500;margin-bottom:3px;">£842k</div><div style="width:100%;height:80px;background:#1a1a18;opacity:1;border-radius:3px 3px 0 0;"></div><div style="font-size:10px;color:#1a1a18;font-weight:500;">Jun</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Culinary Collective · Confidential</span>
+      <span>June 2026</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide" id="slide-2">
+    <div>
+      <div class="slide-header">
+        <div class="slide-eyebrow">Board Operating Review · June 2026</div>
+        <div class="slide-title">Venue <em>Breakdown</em></div>
+        <div class="slide-sub">Revenue, GP% and month-on-month performance · all 6 venues</div>
+      </div>
+      <div class="venue-list">
+        <div style="display:grid;grid-template-columns:160px 1fr 80px 80px 70px;gap:16px;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#888780;padding-bottom:10px;border-bottom:1px solid #E0DDD6;">
+          <span>Venue</span><span></span><span style="text-align:right">Revenue</span><span style="text-align:right">GP %</span><span style="text-align:right">MoM</span>
+        </div>
+        <div class="venue-item">
+          <div class="venue-name">Flat Iron Square</div>
+          <div class="vbar-bg"><div class="vbar-fill top" style="width:100%"></div></div>
+          <div class="vrev">£218k</div><div class="vgp">71%</div><div class="vmom good">+8%</div>
+        </div>
+        <div class="venue-item">
+          <div class="venue-name">Pyro</div>
+          <div class="vbar-bg"><div class="vbar-fill" style="width:80%"></div></div>
+          <div class="vrev">£174k</div><div class="vgp">69%</div><div class="vmom good">+7%</div>
+        </div>
+        <div class="venue-item">
+          <div class="venue-name">Heard</div>
+          <div class="vbar-bg"><div class="vbar-fill" style="width:68%"></div></div>
+          <div class="vrev">£148k</div><div class="vgp">67%</div><div class="vmom good">+6%</div>
+        </div>
+        <div class="venue-item">
+          <div class="venue-name">Oudh 1722</div>
+          <div class="vbar-bg"><div class="vbar-fill" style="width:57%"></div></div>
+          <div class="vrev">£124k</div><div class="vgp">64%</div><div class="vmom good">+5%</div>
+        </div>
+        <div class="venue-item">
+          <div class="venue-name">Rae's</div>
+          <div class="vbar-bg"><div class="vbar-fill" style="width:45%"></div></div>
+          <div class="vrev">£98k</div><div class="vgp">70%</div><div class="vmom good">+7%</div>
+        </div>
+        <div class="venue-item">
+          <div class="venue-name">Spring St Pizza</div>
+          <div class="vbar-bg"><div class="vbar-fill" style="width:37%"></div></div>
+          <div class="vrev">£80k</div><div class="vgp">63%</div><div class="vmom good">+8%</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="three-col">
+        <div style="background:#F5FAF0;border:1px solid #C8E0A8;border-radius:12px;padding:18px;">
+          <div style="font-size:11px;color:#3B6D11;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Top performer</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:4px;">Flat Iron Square</div>
+          <div style="font-size:12px;color:#5F5E5A;">£218k · 71% GP · Summer series driving growth</div>
+        </div>
+        <div style="background:#FDFAF5;border:1px solid #F5C97A;border-radius:12px;padding:18px;">
+          <div style="font-size:11px;color:#854F0B;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Watch closely</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:4px;">Oudh 1722</div>
+          <div style="font-size:12px;color:#5F5E5A;">Labour at 34% — 6% above target</div>
+        </div>
+        <div style="background:#FDF5F5;border:1px solid #F0AAAA;border-radius:12px;padding:18px;">
+          <div style="font-size:11px;color:#A32D2D;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Needs review</div>
+          <div style="font-family:'Instrument Serif',serif;font-size:20px;margin-bottom:4px;">Spring St Pizza</div>
+          <div style="font-size:12px;color:#5F5E5A;">GP at 63% — below 65% target</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Culinary Collective · Confidential</span>
+      <span>June 2026</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide" id="slide-3">
+    <div>
+      <div class="slide-header">
+        <div class="slide-eyebrow">Board Operating Review · June 2026</div>
+        <div class="slide-title">Opportunities <em>&</em> Risks</div>
+        <div class="slide-sub">Key signals from operational and commercial data this month</div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#3B6D11;margin-bottom:14px;">Opportunities</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="flag-card green">
+              <div class="flag-venue">Flat Iron Square</div>
+              <div class="flag-title">Summer series outperforming</div>
+              <div class="flag-sub">Events revenue up 15% vs May. Pipeline strong for July — consider capacity expansion and premium pricing tier.</div>
+            </div>
+            <div class="flag-card green">
+              <div class="flag-venue">Group</div>
+              <div class="flag-title">GP at 68% — best of the year</div>
+              <div class="flag-sub">Two points above target. Menu engineering and supplier negotiations showing results. Protect this margin going into H2.</div>
+            </div>
+            <div class="flag-card green">
+              <div class="flag-venue">White-label catering</div>
+              <div class="flag-title">External catering growing</div>
+              <div class="flag-sub">£61k this month, up 13% MoM. H2 opportunity to scale this division with dedicated resource.</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#A32D2D;margin-bottom:14px;">Risks</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="flag-card red">
+              <div class="flag-venue">Oudh 1722</div>
+              <div class="flag-title">Labour at 34% — action required</div>
+              <div class="flag-sub">6% above target. ~£7k excess labour cost this month. Rota review scheduled with Ops Manager.</div>
+            </div>
+            <div class="flag-card amber">
+              <div class="flag-venue">Spring St Pizza</div>
+              <div class="flag-title">GP slipping to 63%</div>
+              <div class="flag-sub">Below 65% floor. Supplier cost increases likely driver. Menu pricing decision needed this month.</div>
+            </div>
+            <div class="flag-card amber">
+              <div class="flag-venue">Heard</div>
+              <div class="flag-title">No-show rate up to 6.8%</div>
+              <div class="flag-sub">Up from 5.8% over 3 weeks. Review confirmation flow — consider deposit policy for peak bookings.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Culinary Collective · Confidential</span>
+      <span>June 2026</span>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide" id="slide-4">
+    <div>
+      <div class="slide-header">
+        <div class="slide-eyebrow">Board Operating Review · June 2026</div>
+        <div class="slide-title">Recommended <em>Actions</em></div>
+        <div class="slide-sub">4 priorities for leadership this month</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
+        <div class="action-card">
+          <div class="action-num">01</div>
+          <div class="action-title">Oudh 1722 — rota review</div>
+          <div class="action-sub">Labour at 34% vs 28% target. Ops Manager to review weekly rota against forecasted covers and reduce shift hours by ~15%. Target: back to 29% by end of July.</div>
+          <div class="action-meta">
+            <span class="action-tag">Owner: Ops Manager</span>
+            <span class="action-tag">Due: 15 Jul</span>
+            <span class="action-tag bad" style="border-color:#F0AAAA;color:#A32D2D;">Urgent</span>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="action-num">02</div>
+          <div class="action-title">Spring St Pizza — menu pricing review</div>
+          <div class="action-sub">GP slipped to 63% over 6 weeks. Head Chef to audit supplier invoices and present options: renegotiate, adjust portions, or reprice 4–6 key menu items.</div>
+          <div class="action-meta">
+            <span class="action-tag">Owner: Head Chef</span>
+            <span class="action-tag">Due: 22 Jul</span>
+            <span class="action-tag warn" style="border-color:#F5C97A;color:#854F0B;">Watch</span>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="action-num">03</div>
+          <div class="action-title">Flat Iron Square — July capacity plan</div>
+          <div class="action-sub">Summer series 18% ahead of last year. Events Lead to model July–August capacity and propose premium pricing tier for Fri–Sat events to maximise revenue per event.</div>
+          <div class="action-meta">
+            <span class="action-tag">Owner: Events Lead</span>
+            <span class="action-tag">Due: 10 Jul</span>
+            <span class="action-tag good" style="border-color:#C8E0A8;color:#3B6D11;">Opportunity</span>
+          </div>
+        </div>
+        <div class="action-card">
+          <div class="action-num">04</div>
+          <div class="action-title">Heard — booking confirmation flow</div>
+          <div class="action-sub">No-show rate up to 6.8% over 3 weeks. GM to review confirmation email timing and model revenue impact of a £10 deposit for bookings of 4+ at peak times.</div>
+          <div class="action-meta">
+            <span class="action-tag">Owner: GM</span>
+            <span class="action-tag">Due: 18 Jul</span>
+            <span class="action-tag warn" style="border-color:#F5C97A;color:#854F0B;">Monitor</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">
+      <span>Culinary Collective · Confidential</span>
+      <span>June 2026</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button class="nav-btn" onclick="prev()">←</button>
+  <div class="nav-dot active" onclick="goTo(0)"></div>
+  <div class="nav-dot" onclick="goTo(1)"></div>
+  <div class="nav-dot" onclick="goTo(2)"></div>
+  <div class="nav-dot" onclick="goTo(3)"></div>
+  <div class="nav-dot" onclick="goTo(4)"></div>
+  <button class="nav-btn" onclick="next()">→</button>
+  <span style="font-size:11px;color:#B4B2A9;margin-left:4px;" id="slide-count">1 / 5</span>
+</div>
+
+<script>
+let current = 0;
+const total = 5;
+function goTo(n) {
+  document.querySelectorAll('.slide').forEach((s,i) => s.classList.toggle('active', i===n));
+  document.querySelectorAll('.nav-dot').forEach((d,i) => d.classList.toggle('active', i===n));
+  document.getElementById('slide-count').textContent = `${n+1} / ${total}`;
+  current = n;
+}
+function next() { goTo((current+1) % total); }
+function prev() { goTo((current-1+total) % total); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prev();
+});
+</script>
+</body>
+</html>
